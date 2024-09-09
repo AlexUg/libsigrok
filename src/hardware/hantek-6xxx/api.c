@@ -87,6 +87,12 @@ static const struct hantek_6xxx_profile dev_profiles[] = {
 		ARRAY_AND_SIZE(vdivs),
 	},
 	{
+		0x04b4, 0x2020, 0x1d50, 0x608e, 0x0001,
+		"Voltcraft", "DSO2020",  "fx2lafw-hantek-6022be.fw",
+		ARRAY_AND_SIZE(dc_coupling), FALSE,
+		ARRAY_AND_SIZE(vdivs),
+	},
+	{
 		0x8102, 0x8102, 0x1d50, 0x608e, 0x0002,
 		"Sainsmart", "DDS120", "fx2lafw-sainsmart-dds120.fw",
 		ARRAY_AND_SIZE(acdc_coupling), TRUE,
@@ -140,10 +146,8 @@ static struct sr_dev_inst *hantek_6xxx_dev_new(const struct hantek_6xxx_profile 
 
 	for (i = 0; i < ARRAY_SIZE(channel_names); i++) {
 		ch = sr_channel_new(sdi, i, SR_CHANNEL_ANALOG, TRUE, channel_names[i]);
-		cg = g_malloc0(sizeof(struct sr_channel_group));
-		cg->name = g_strdup(channel_names[i]);
+		cg = sr_channel_group_new(sdi, channel_names[i], NULL);
 		cg->channels = g_slist_append(cg->channels, ch);
-		sdi->channel_groups = g_slist_append(sdi->channel_groups, cg);
 	}
 
 	devc = g_malloc0(sizeof(struct dev_context));

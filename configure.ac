@@ -96,6 +96,18 @@ SR_PKGLIBS_RUBY=
 SR_EXTRA_LIBS=
 SR_EXTRA_CXX_LIBS=
 
+SR_ARG_OPT_PKG([zlib], [ZLIB], , [zlib])
+AM_CONDITIONAL([HAVE_ZLIB], [test "x$sr_have_zlib" = xyes])
+AM_COND_IF([HAVE_ZLIB], [
+	SR_APPEND([sr_deps_avail], [crc32 zlib])
+	SR_PREPEND([SR_EXTRA_LIBS], [-lz])
+])
+
+AM_CONDITIONAL([HAVE_INPUT_STF], [test "x$sr_have_zlib" = xyes])
+AM_COND_IF([HAVE_INPUT_STF], [
+	AC_DEFINE([HAVE_INPUT_STF], [1], [Is the STF input module supported?])
+])
+
 SR_ARG_OPT_PKG([libserialport], [LIBSERIALPORT], ,
 	[libserialport >= 0.1.1])
 
@@ -213,6 +225,41 @@ AM_CONDITIONAL([NEED_RPC], [test "x$sr_cv_have_rpc" = xyes])
 # Check for compiler support of 128 bit integers
 AC_CHECK_TYPES([__int128_t, __uint128_t], [], [], [])
 
+AC_CACHE_CHECK([for poll], [sr_cv_have_poll],
+	[AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <poll.h>]],
+			[[(void) poll(0, 0, -1);]])],
+		[sr_cv_have_poll=yes], [sr_cv_have_poll=no])])
+AS_IF([test "x$sr_cv_have_poll" = xyes],
+	[AC_DEFINE([HAVE_POLL], [1],
+		[Specifies whether we have the poll(2) function.])])
+AC_CACHE_CHECK([for select], [sr_cv_have_select],
+	[AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/select.h>]],
+			[[(void) select(0, 0, 0, 0, 0);]])],
+		[sr_cv_have_select=yes], [sr_cv_have_select=no])])
+AS_IF([test "x$sr_cv_have_select" = xyes],
+	[AC_DEFINE([HAVE_SELECT], [1],
+		[Specifies whether we have the select(2) function.])])
+
+#######################
+##  miniLZO related  ##
+#######################
+# These were taken from the README.LZO file in the miniLZO archive.
+
+AC_CHECK_TYPE(ptrdiff_t,long)
+AC_TYPE_SIZE_T
+AC_CHECK_SIZEOF(short)
+AC_CHECK_SIZEOF(int)
+AC_CHECK_SIZEOF(long)
+AC_CHECK_SIZEOF(long long)
+AC_CHECK_SIZEOF(__int64)
+AC_CHECK_SIZEOF(void *)
+AC_CHECK_SIZEOF(size_t)
+AC_CHECK_SIZEOF(ptrdiff_t)
+
+AC_C_CONST
+
+AC_CHECK_FUNCS(memcmp memcpy memmove memset)
+
 ########################
 ##  Hardware drivers  ##
 ########################
@@ -261,6 +308,8 @@ SR_DRIVER([Agilent DMM], [agilent-dmm], [serial_comm])
 SR_DRIVER([Appa 55II], [appa-55ii], [serial_comm])
 SR_DRIVER([Arachnid Labs Re:load Pro], [arachnid-labs-re-load-pro], [serial_comm])
 SR_DRIVER([ASIX SIGMA/SIGMA2], [asix-sigma], [libftdi])
+SR_DRIVER([ASIX OMEGA RTM CLI], [asix-omega-rtm-cli])
+SR_DRIVER([Atorch], [atorch], [serial_comm])
 SR_DRIVER([Atten PPS3xxx], [atten-pps3xxx], [serial_comm])
 SR_DRIVER([BayLibre ACME], [baylibre-acme], [sys_timerfd_h])
 SR_DRIVER([BeagleLogic], [beaglelogic], [sys_mman_h sys_ioctl_h])
@@ -271,15 +320,17 @@ SR_DRIVER([Colead SLM], [colead-slm], [serial_comm])
 SR_DRIVER([Conrad DIGI 35 CPU], [conrad-digi-35-cpu], [serial_comm])
 SR_DRIVER([dcttech usbrelay], [dcttech-usbrelay], [libhidapi])
 SR_DRIVER([demo], [demo])
+SR_DRIVER([Devantech ETH008], [devantech-eth008], [serial_comm])
 SR_DRIVER([DreamSourceLab DSLogic], [dreamsourcelab-dslogic], [libusb])
 SR_DRIVER([Fluke 45], [fluke-45])
 SR_DRIVER([Fluke DMM], [fluke-dmm], [serial_comm])
 SR_DRIVER([FTDI LA], [ftdi-la], [libusb libftdi])
 SR_DRIVER([fx2lafw], [fx2lafw], [libusb])
 SR_DRIVER([GMC MH 1x/2x], [gmc-mh-1x-2x], [serial_comm])
+SR_DRIVER([Great Scott Gadgets GreatFET One], [greatfet], [libusb])
 SR_DRIVER([GW Instek GDS-800], [gwinstek-gds-800], [serial_comm])
 SR_DRIVER([GW Instek GPD], [gwinstek-gpd], [serial_comm])
-SR_DRIVER([Hameg HMO], [hameg-hmo], [serial_comm])
+SR_DRIVER([Hameg HMO], [hameg-hmo])
 SR_DRIVER([Hantek 4032L], [hantek-4032l], [libusb])
 SR_DRIVER([Hantek 6xxx], [hantek-6xxx], [libusb])
 SR_DRIVER([Hantek DSO], [hantek-dso], [libusb])
@@ -287,10 +338,12 @@ SR_DRIVER([HP 3457A], [hp-3457a])
 SR_DRIVER([HP 3478A], [hp-3478a], [libgpib])
 SR_DRIVER([hp-59306a], [hp-59306a])
 SR_DRIVER([Hung-Chang DSO-2100], [hung-chang-dso-2100], [libieee1284])
+SR_DRIVER([ICStation USBRelay], [icstation-usbrelay], [serial_comm])
 SR_DRIVER([Ikalogic Scanalogic-2], [ikalogic-scanalogic2], [libusb])
 SR_DRIVER([Ikalogic Scanaplus], [ikalogic-scanaplus], [libftdi])
 SR_DRIVER([IPDBG LA], [ipdbg-la])
 SR_DRIVER([ITECH IT8500], [itech-it8500], [serial_comm])
+SR_DRIVER([JUNTEK JDS6600], [juntek-jds6600], [serial_comm])
 SR_DRIVER([Kecheng KC-330B], [kecheng-kc-330b], [libusb])
 SR_DRIVER([KERN scale], [kern-scale], [serial_comm])
 SR_DRIVER([Kingst LA1010], [kingst-la1010], [libusb])
@@ -310,6 +363,7 @@ SR_DRIVER([Norma DMM], [norma-dmm], [serial_comm])
 SR_DRIVER([OpenBench Logic Sniffer], [openbench-logic-sniffer], [serial_comm])
 SR_DRIVER([PCE PCE-322A], [pce-322a], [serial_comm])
 SR_DRIVER([Pipistrello-OLS], [pipistrello-ols], [libftdi])
+SR_DRIVER([RaspberryPI PICO], [raspberrypi-pico], [serial_comm])
 SR_DRIVER([RDTech DPSxxxx/DPHxxxx], [rdtech-dps], [serial_comm])
 SR_DRIVER([RDTech UMXX], [rdtech-um], [serial_comm])
 SR_DRIVER([RDTech TCXX], [rdtech-tc], [serial_comm libnettle])
@@ -368,14 +422,41 @@ AC_ARG_ENABLE([java],
 
 sr_cxx_missing=
 
-# Check if the C++ compiler supports the C++11 standard.
-AX_CXX_COMPILE_STDCXX([11], [noext], [optional])
-AS_IF([test "x$HAVE_CXX11" != x1],
+# Check if the C++ compiler supports at least the C++11 standard.
+# Get the highest of the available C++17/C++14/C++11 standards.
+# This transparently amends CXXFLAGS to pick the detected standard.
+HAVE_MODERN_CXX=
+AS_IF([test "x$HAVE_MODERN_CXX" = x],
+	[AX_CXX_COMPILE_STDCXX([17], [noext], [optional])])
+AS_IF([test "x$HAVE_CXX17" = x1],
+	[HAVE_MODERN_CXX=yes])
+AS_IF([test "x$HAVE_MODERN_CXX" = x],
+	[AX_CXX_COMPILE_STDCXX([14], [noext], [optional])])
+AS_IF([test "x$HAVE_CXX14" = x1],
+	[HAVE_MODERN_CXX=yes])
+AS_IF([test "x$HAVE_MODERN_CXX" = x],
+	[AX_CXX_COMPILE_STDCXX([11], [noext], [optional])])
+AS_IF([test "x$HAVE_CXX11" = x1],
+	[HAVE_MODERN_CXX=yes])
+AS_IF([test "x$HAVE_MODERN_CXX" = x],
 	[SR_APPEND([sr_cxx_missing], [', '], ['C++11'])])
 
 # The C++ bindings need glibmm.
-SR_PKG_CHECK([glibmm], [SR_PKGLIBS_CXX], [glibmm-2.4 >= 2.32.0])
+# Prefer glibmm-2.4 for backwards compatibility.
+# Accept glibmm-2.68 when glibmm-2.4 is not available.
+sr_have_glibmm=no
 AS_IF([test "x$sr_have_glibmm" != xyes],
+	[SR_PKG_CHECK([glibmm24], [SR_PKGLIBS_CXX], [glibmm-2.4 >= 2.32.0])])
+AS_IF([test "x$sr_have_glibmm24" = xyes],
+	[SR_APPEND([SR_GLIBMM_REQUIRES], ['glibmm-2.4 >= 2.32.0'])
+	sr_have_glibmm=yes])
+AS_IF([test "x$sr_have_glibmm" != xyes],
+	[SR_PKG_CHECK([glibmm268], [SR_PKGLIBS_CXX], [glibmm-2.68 >= 2.68.0])])
+AS_IF([test "x$sr_have_glibmm268" = xyes],
+	[SR_APPEND([SR_GLIBMM_REQUIRES], ['glibmm-2.68 >= 2.68.0'])
+	sr_have_glibmm=yes])
+AS_IF([test "x$sr_have_glibmm" = xyes],
+	[AC_SUBST(SR_GLIBMM_REQUIRES)],
 	[SR_APPEND([sr_cxx_missing], [', '], [glibmm])])
 
 # The C++ bindings use Doxygen to parse libsigrok symbols.
@@ -405,6 +486,16 @@ AM_COND_IF([BINDINGS_CXX], [
 	AS_IF([test "x$sr_cv_have_stoi_stod" = xyes],
 		[AC_DEFINE([HAVE_STOI_STOD], [1],
 			[Specifies whether we have the stoi and stod functions.])])
+	# In theory std::stoul() should have identical availability
+	# as std::stoi() and std::stod() have. All of them are C++11.
+	# But we play it safe here, and check support individually.
+	AC_CACHE_CHECK([for stoul], [sr_cv_have_stoul],
+		[AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <string>]],
+				[[(void) std::stoul("1");]])],
+			[sr_cv_have_stoul=yes], [sr_cv_have_stoul=no])])
+	AS_IF([test "x$sr_cv_have_stoul" = xyes],
+		[AC_DEFINE([HAVE_STOUL], [1],
+			[Specifies whether we have the std::stoul function.])])
 ])
 
 #######################
@@ -583,6 +674,7 @@ AM_COND_IF([BINDINGS_CXX], [
 ])
 
 # Check for specific libusb features, now that we know the CFLAGS.
+# Also check for version dependent libftdi features.
 AC_LANG([C])
 sr_save_cflags=$CFLAGS
 sr_save_libs=$LIBS
@@ -592,17 +684,18 @@ AC_CHECK_TYPES([libusb_os_handle],
 	[sr_have_libusb_os_handle=yes], [sr_have_libusb_os_handle=no],
 	[[#include <libusb.h>]])
 AC_CHECK_FUNCS([zip_discard])
+AC_CHECK_FUNCS([ftdi_tciflush ftdi_tcoflush ftdi_tcioflush])
 LIBS=$sr_save_libs
 CFLAGS=$sr_save_cflags
 
-AM_COND_IF([NEED_USB], [AS_CASE([$sr_have_libusb_os_handle:$host_os], [no:mingw*],
-	[AC_MSG_ERROR([Windows builds require the event-abstraction branch of libusb])])])
-
 sr_glib_version=`$PKG_CONFIG --modversion glib-2.0 2>&AS_MESSAGE_LOG_FD`
 sr_libzip_version=`$PKG_CONFIG --modversion libzip 2>&AS_MESSAGE_LOG_FD`
+sr_zlib_version=`$PKG_CONFIG --modversion zlib 2>&AS_MESSAGE_LOG_FD`
 
 AC_DEFINE_UNQUOTED([CONF_LIBZIP_VERSION], ["$sr_libzip_version"],
 	[Build-time version of libzip.])
+AC_DEFINE_UNQUOTED([CONF_ZLIB_VERSION], ["$sr_zlib_version"],
+	[Build-time version of zlib.])
 AC_DEFINE_UNQUOTED([CONF_HOST], ["$host"],
 	[The canonical host libsigrok will run on.])
 
@@ -622,6 +715,7 @@ cat >&AS_MESSAGE_FD <<_EOF
 
 libsigrok configuration summary:
  - Package version................. $SR_PACKAGE_VERSION
+ - Version string suffix .......... $SR_PACKAGE_VERSION_STRING_SUFFIX
  - Library ABI version............. $SR_LIB_VERSION
  - Prefix.......................... $prefix
  - Building on..................... $build

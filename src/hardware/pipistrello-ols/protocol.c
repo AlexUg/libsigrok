@@ -90,7 +90,7 @@ SR_PRIV int p_ols_open(struct dev_context *devc)
 		return SR_ERR;
 	}
 
-	if ((ret = ftdi_usb_purge_buffers(devc->ftdic)) < 0) {
+	if ((ret = PURGE_FTDI_BOTH(devc->ftdic)) < 0) {
 		sr_err("Failed to purge FTDI RX/TX buffers (%d): %s.",
 		       ret, ftdi_get_error_string(devc->ftdic));
 		goto err_open_close_ftdic;
@@ -325,10 +325,8 @@ SR_PRIV struct sr_dev_inst *p_ols_get_metadata(uint8_t *buf, int bytes_read, str
 		}
 	}
 
-	sdi->model = devname->str;
-	sdi->version = version->str;
-	g_string_free(devname, FALSE);
-	g_string_free(version, FALSE);
+	sdi->model = g_string_free(devname, FALSE);
+	sdi->version = g_string_free(version, FALSE);
 
 	return sdi;
 }

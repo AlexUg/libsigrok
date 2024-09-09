@@ -64,6 +64,7 @@ static struct sr_key_info sr_key_info_config[] = {
 	{SR_CONF_SIGNAL_GENERATOR, SR_T_STRING, NULL, "Signal generator", NULL},
 	{SR_CONF_POWERMETER, SR_T_STRING, NULL, "Power meter", NULL},
 	{SR_CONF_MULTIPLEXER, SR_T_STRING, NULL, "Multiplexer", NULL},
+	{SR_CONF_DELAY_GENERATOR, SR_T_STRING, NULL, "Delay generator", NULL},
 
 	/* Driver scan options */
 	{SR_CONF_CONN, SR_T_STRING, "conn",
@@ -74,6 +75,8 @@ static struct sr_key_info sr_key_info_config[] = {
 		"Modbus slave address", NULL},
 	{SR_CONF_FORCE_DETECT, SR_T_STRING, "force_detect",
 		"Forced detection", NULL},
+	{SR_CONF_PROBE_NAMES, SR_T_STRING, "probe_names",
+		"Names of device's probes", NULL},
 
 	/* Device (or channel group) configuration */
 	{SR_CONF_SAMPLERATE, SR_T_UINT64, "samplerate",
@@ -212,6 +215,10 @@ static struct sr_key_info sr_key_info_config[] = {
 		"Power Target", NULL},
 	{SR_CONF_RESISTANCE_TARGET, SR_T_FLOAT, "resistance_target",
 		"Resistance Target", NULL},
+	{SR_CONF_OVER_CURRENT_PROTECTION_DELAY, SR_T_FLOAT, "ocp_delay",
+		"Over-current protection delay", NULL},
+	{SR_CONF_INVERTED, SR_T_BOOL, "inverted",
+		"Signal inverted", NULL},
 
 	/* Special stuff */
 	{SR_CONF_SESSIONFILE, SR_T_STRING, "sessionfile",
@@ -329,6 +336,8 @@ SR_PRIV const GVariantType *sr_variant_type_get(int datatype)
 	switch (datatype) {
 	case SR_T_INT32:
 		return G_VARIANT_TYPE_INT32;
+	case SR_T_UINT32:
+		return G_VARIANT_TYPE_UINT32;
 	case SR_T_UINT64:
 		return G_VARIANT_TYPE_UINT64;
 	case SR_T_STRING:

@@ -169,7 +169,6 @@ static const uint64_t vdivs[][2] = {
 
 static const char *trigger_sources[] = {
 	"CH1", "CH2", "EXT",
-	/* TODO: forced */
 };
 
 static const char *trigger_slopes[] = {
@@ -199,10 +198,8 @@ static struct sr_dev_inst *dso_dev_new(const struct dso_profile *prof)
 	 */
 	for (i = 0; i < ARRAY_SIZE(channel_names); i++) {
 		ch = sr_channel_new(sdi, i, SR_CHANNEL_ANALOG, TRUE, channel_names[i]);
-		cg = g_malloc0(sizeof(struct sr_channel_group));
-		cg->name = g_strdup(channel_names[i]);
+		cg = sr_channel_group_new(sdi, channel_names[i], NULL);
 		cg->channels = g_slist_append(cg->channels, ch);
-		sdi->channel_groups = g_slist_append(sdi->channel_groups, cg);
 	}
 
 	devc = g_malloc0(sizeof(struct dev_context));
@@ -221,7 +218,7 @@ static struct sr_dev_inst *dso_dev_new(const struct dso_profile *prof)
 	devc->voffset_trigger = DEFAULT_VERT_TRIGGERPOS;
 	devc->framesize = DEFAULT_FRAMESIZE;
 	devc->triggerslope = SLOPE_POSITIVE;
-	devc->triggersource = g_strdup(DEFAULT_TRIGGER_SOURCE);
+	devc->triggersource = NULL;
 	devc->capture_ratio = DEFAULT_CAPTURE_RATIO;
 	sdi->priv = devc;
 
@@ -468,6 +465,8 @@ static int config_get(uint32_t key, GVariant **data,
 			*data = g_variant_new_uint64(devc->framesize);
 			break;
 		case SR_CONF_TRIGGER_SOURCE:
+			if (!devc->triggersource)
+				return SR_ERR_NA;
 			*data = g_variant_new_string(devc->triggersource);
 			break;
 		case SR_CONF_TRIGGER_SLOPE:
@@ -558,6 +557,7 @@ static int config_set(uint32_t key, GVariant *data,
 		case SR_CONF_TRIGGER_SOURCE:
 			if ((idx = std_str_idx(data, ARRAY_AND_SIZE(trigger_sources))) < 0)
 				return SR_ERR_ARG;
+			g_free(devc->triggersource);
 			devc->triggersource = g_strdup(trigger_sources[idx]);
 			break;
 		default:
@@ -839,8 +839,10 @@ static int handle_event(int fd, int revents, void *cb_data)
 			return TRUE;
 		if (dso_enable_trigger(sdi) != SR_OK)
 			return TRUE;
-//		if (dso_force_trigger(sdi) != SR_OK)
-//			return TRUE;
+		if (!devc->triggersource) {
+			if (dso_force_trigger(sdi) != SR_OK)
+				return TRUE;
+		}
 		sr_dbg("Successfully requested next chunk.");
 		devc->dev_state = CAPTURE;
 		return TRUE;
@@ -861,8 +863,10 @@ static int handle_event(int fd, int revents, void *cb_data)
 				break;
 			if (dso_enable_trigger(sdi) != SR_OK)
 				break;
-//			if (dso_force_trigger(sdi) != SR_OK)
-//				break;
+			if (!devc->triggersource) {
+				if (dso_force_trigger(sdi) != SR_OK)
+					break;
+			}
 			sr_dbg("Successfully requested next chunk.");
 		}
 		break;

@@ -134,7 +134,7 @@ typedef guint pyg_flags_type;
 
         auto arglist = Py_BuildValue("(OO)", log_obj, string_obj);
 
-        auto result = PyEval_CallObject($input, arglist);
+        auto result = PyObject_CallObject($input, arglist);
 
         Py_XDECREF(arglist);
         Py_XDECREF(log_obj);
@@ -177,7 +177,7 @@ typedef guint pyg_flags_type;
     $1 = [=] () {
         const auto gstate = PyGILState_Ensure();
 
-        const auto result = PyEval_CallObject($input, nullptr);
+        const auto result = PyObject_CallObject($input, nullptr);
         const bool completed = !PyErr_Occurred();
         const bool valid_result = (completed && result == Py_None);
 
@@ -221,7 +221,7 @@ typedef guint pyg_flags_type;
 
         auto arglist = Py_BuildValue("(OO)", device_obj, packet_obj);
 
-        auto result = PyEval_CallObject($input, arglist);
+        auto result = PyObject_CallObject($input, arglist);
 
         Py_XDECREF(arglist);
         Py_XDECREF(device_obj);
@@ -340,6 +340,8 @@ Glib::VariantBase python_to_variant_by_key(PyObject *input, const sigrok::Config
         return Glib::Variant<double>::create(PyFloat_AsDouble(input));
     else if (type == SR_T_INT32 && PyInt_Check(input))
         return Glib::Variant<gint32>::create(PyInt_AsLong(input));
+    else if (type == SR_T_UINT32 && PyInt_Check(input))
+        return Glib::Variant<guint32>::create(PyInt_AsLong(input));
     else if ((type == SR_T_RATIONAL_VOLT) && PyTuple_Check(input) && (PyTuple_Size(input) == 2)) {
         PyObject *numObj = PyTuple_GetItem(input, 0);
         PyObject *denomObj = PyTuple_GetItem(input, 1);
@@ -369,6 +371,8 @@ Glib::VariantBase python_to_variant_by_option(PyObject *input,
         return Glib::Variant<double>::create(PyFloat_AsDouble(input));
     else if (type == G_VARIANT_TYPE_INT32 && PyInt_Check(input))
         return Glib::Variant<gint32>::create(PyInt_AsLong(input));
+    else if (type == G_VARIANT_TYPE_UINT32 && PyInt_Check(input))
+        return Glib::Variant<guint32>::create(PyInt_AsLong(input));
     else
         throw sigrok::Error(SR_ERR_ARG);
 }

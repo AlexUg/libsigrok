@@ -99,6 +99,8 @@ SR_PRIV int serial_open(struct sr_serial_dev_inst *serial, int flags)
 		serial->lib_funcs = ser_lib_funcs_hid;
 	else if (ser_name_is_bt(serial))
 		serial->lib_funcs = ser_lib_funcs_bt;
+	else if (ser_name_is_tcpraw(serial))
+		serial->lib_funcs = ser_lib_funcs_tcpraw;
 	else
 		serial->lib_funcs = ser_lib_funcs_libsp;
 	if (!serial->lib_funcs)
@@ -925,6 +927,8 @@ SR_PRIV int serial_stream_detect(struct sr_serial_dev_inst *serial,
 	return SR_ERR;
 }
 
+#endif
+
 /**
  * Extract the serial device and options from the options linked list.
  *
@@ -976,6 +980,8 @@ SR_PRIV int sr_serial_extract_options(GSList *options,
 
 	return SR_OK;
 }
+
+#ifdef HAVE_SERIAL_COMM
 
 /** @private */
 SR_PRIV int serial_source_add(struct sr_session *session,
